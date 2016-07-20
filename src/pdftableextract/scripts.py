@@ -4,6 +4,7 @@ import logging
 import subprocess
 from .core import process_page, output
 import core
+from pyPdf import PdfFileReader
 
 #-----------------------------------------------------------------------
 
@@ -13,7 +14,7 @@ def procargs() :
   p.add_argument("-o", dest='outfile', help="output file", default=None,
      type=str)
   p.add_argument("--greyscale_threshold","-g", help="grayscale threshold (%%)", type=int, default=25 )
-  p.add_argument("-p", type=str, dest='page', required=True, action="append",
+  p.add_argument("-p", type=str, dest='page', action="append",
      help="a page in the PDF to process, as page[:firstrow:lastrow]." )
   p.add_argument("-c", type=str, dest='crop',
      help="crop to left:top:right:bottom. Paints white outside this "
@@ -25,10 +26,10 @@ def procargs() :
   p.add_argument("-name", help="name to add to XML tag, or HTML comments")
   p.add_argument("-pad", help="imitial image pading (pixels)", type=int,
      default=2 )
-  p.add_argument("-white",action="append", 
+  p.add_argument("-white",action="append",
     help="paint white to the bitmap as left:top:right:bottom in length units."
          "Done before painting black" )
-  p.add_argument("-black",action="append", 
+  p.add_argument("-black",action="append",
     help="paint black to the bitmap as left:top:right:bottom in length units."
          "Done after poainting white" )
   p.add_argument("-bitmap", action="store_true",
@@ -82,12 +83,20 @@ def main():
 
 def imain(args):
     cells = []
+    if not args.page:
+        print 'p argument not passed. Converting all pages.'
+        args.page = []
+        pdf = PdfFileReader(open(args.infile,'rb'))
+        print "Total Number of Pages in " + args.infile + " are " + str(pdf.getNumPages())
+        for pg in range(1,pdf.getNumPages()+1):
+            args.page.extend(str(pg))
     if args.checkcrop or args.checklines or args.checkdivs or args.checkcells:
         for pgs in args.page :
+            print "Processing Page #" + pgs
             success = process_page(args.infile, pgs,
-                bitmap=args.bitmap, 
-                checkcrop=args.checkcrop, 
-                checklines=args.checklines, 
+                bitmap=args.bitmap,
+                checkcrop=args.checkcrop,
+                checklines=args.checklines,
                 checkdivs=args.checkdivs,
                 checkcells=args.checkcells,
                 whitespace=args.whitespace,
@@ -104,10 +113,11 @@ def imain(args):
 
     else:
         for pgs in args.page :
+            print "Processing Page #" + pgs
             cells.extend(process_page(args.infile, pgs,
-                bitmap=args.bitmap, 
-                checkcrop=args.checkcrop, 
-                checklines=args.checklines, 
+                bitmap=args.bitmap,
+                checkcrop=args.checkcrop,
+                checklines=args.checklines,
                 checkdivs=args.checkdivs,
                 checkcells=args.checkcells,
                 whitespace=args.whitespace,
@@ -127,6 +137,4 @@ def imain(args):
                 args.outfile = sys.stdout
             filenames["{0}_filename".format(args.t)] = args.outfile
             output(cells, args.page, name=args.name, infile=args.infile, output_type=args.t, **filenames)
-
-
 
