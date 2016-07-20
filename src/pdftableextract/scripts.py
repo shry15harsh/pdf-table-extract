@@ -10,8 +10,8 @@ from pyPdf import PdfFileReader
 
 def procargs() :
   p = argparse.ArgumentParser( description="Finds tables in a PDF page.")
-  p.add_argument("-i", dest='infile',  help="input file" )
-  p.add_argument("-o", dest='outfile', help="output file", default=None,
+  p.add_argument("-i", dest='infile', required=True, help="input file" )
+  p.add_argument("-o", dest='outfile', required=True, help="output file", default=None,
      type=str)
   p.add_argument("--greyscale_threshold","-g", help="grayscale threshold (%%)", type=int, default=25 )
   p.add_argument("-p", type=str, dest='page', action="append",
